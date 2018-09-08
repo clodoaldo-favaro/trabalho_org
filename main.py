@@ -93,13 +93,13 @@ def busca_binaria_indice(file, l, r, chave: int):
     if r >= l:
 
         mid = ((l + (r - l) // 2) // tamanho_registro) * tamanho_registro
-        print('Mid', mid)
+        #print('Mid', mid)
         file.seek(mid)
-        print('Posição: ', file.tell())
+        #print('Posição: ', file.tell())
         file_read = file.read(tamanho_registro)
         if len(file_read) < tamanho_registro:
             return -1
-        print('Bytes lidos:', len(file_read))
+        #print('Bytes lidos:', len(file_read))
         registro = struct.unpack('ii', file_read)
 
         if registro[0] == chave:
@@ -116,12 +116,12 @@ def busca_binaria_indice(file, l, r, chave: int):
 def criar_indices(caminho_dados):
     tamanho_registro = struct.calcsize('i30sii')
     endereco = 0
-    with open(caminho_dados, 'rb') as dados, open('./index', 'wb') as index:
+    with open(caminho_dados, 'rb') as dados, open('index', 'wb') as index:
         while True:
             registro = dados.read(tamanho_registro)
             if len(registro) > 0:
                 registro = struct.unpack('i30sii', registro)
-                index.write(struct.pack('ii', registro[0], endereco, b'\n'))
+                index.write(struct.pack('ii', registro[0], endereco))
                 endereco += tamanho_registro
             else:
                 break
@@ -148,13 +148,23 @@ def busca_binaria_helper(caminho: str, chave: int):
     return posicao
 
 
+def buscar_registro_posicao(caminho: str, posicao: int):
+
+    file = open(caminho, 'rb')
+    file.seek(posicao)
+    tamanho = struct.calcsize('i30sii')
+    registro = file.read(tamanho)
+    file.close()
+    return registro
+
+
+
 def mostrar_menu_principal():
-    print('1. NOVO REGISTRO')
-    print('2. GRAVAR REGISTROS NO ARQUIVO')
-    print('3. MOSTRAR REGISTROS NO ARQUIVO')
-    print('4. PESQUISA BINARIA')
-    print('5. CRIAR INDICE')
-    print('6. MOSTRAR ARQUIVO INDICE')
+    print('1. CRIAR BASE DE DADOS')
+    print('2. MOSTRAR REGISTROS NO ARQUIVO')
+    print('3. CRIAR INDICE (COMUM)')
+    print('4. PESQUISA BINARIA COM INDICE COMUM')
+    print('5. MOSTRAR ARQUIVO INDICE')
     print('7. PESQUISA BINARIA COM INDICE')
     print('10. SAIR')
 
@@ -203,21 +213,22 @@ def main():
         if opcao == '10':
             break
         elif opcao == '1':
-            lista_registros.append(criar_registro_helper())
+            popular_base_dados()
         elif opcao == '2':
-            gravar_arquivo(lista_registros, caminho)
-            lista_registros = []
+            mostrar_registros_arquivo('dados')
         elif opcao == '3':
-            mostrar_registros_arquivo(caminho)
+            criar_indices('dados')
         elif opcao == '4':
             chave: int = int(input('Qual chave deseja buscar: '))
             posicao: int = busca_binaria_helper(caminho, chave)
             if posicao != -1:
                 print('Registro encontrado na posicao: ', posicao)
+                registro = buscar_registro_posicao('dados', posicao)
+                mostrar_registro(registro)
             else:
                 print('Registro não localizado')
         elif opcao == '5':
-            criar_indices('./dados')
+            ler_indices('index')
         elif opcao == '6':
             ler_indices('./index')
         elif opcao == '7':
