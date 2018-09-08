@@ -1,6 +1,6 @@
 import os
 import struct
-
+import random
 
 # Ler o nome. Controla para que no máximo seja de 20 caracteres
 def ler_nome() -> str:
@@ -24,7 +24,7 @@ def ler_numero() -> int:
 
 # Recebe os dados em formato int, texto, int, int e devolve uma struct de 32 bytes
 def criar_registro(numero:int, nome:str, idade:int, salario:int):
-    registro = struct.pack('i20sii', numero, nome.encode('utf-8'), idade, salario)
+    registro = struct.pack('i30sii', numero, nome.encode('utf-8'), idade, salario)
     return registro
 
 
@@ -34,7 +34,7 @@ def criar_registro_helper():
     nome = ler_nome()
     idade = ler_numero()
     salario = ler_numero()
-    registro = criar_registro('i20sii',numero, nome, idade, salario)
+    registro = criar_registro('i30sii',numero, nome, idade, salario)
     return registro
 
 
@@ -47,7 +47,7 @@ def gravar_arquivo(lista_structs, caminho_arquivo: str):
 
 # Recebe uma struct de bytes e mostra seus campos
 def mostrar_registro(registro: bytes):
-    tupla = struct.unpack('i20sii', registro)
+    tupla = struct.unpack('i30sii', registro)
     print('Numero: ', tupla[0])
     print('Nome: ', tupla[1].decode('utf-8'))
     print('Idade: ', tupla[2])
@@ -56,7 +56,7 @@ def mostrar_registro(registro: bytes):
 
 # Percorre o arquivo e mostra os registros
 def mostrar_registros_arquivo(caminho_arquivo):
-    tamanho_registro = struct.calcsize('i20sii')
+    tamanho_registro = struct.calcsize('i30sii')
     with open(caminho_arquivo, 'rb') as arq:
         entrada = arq.read(tamanho_registro)
         while entrada != b'':
@@ -65,7 +65,7 @@ def mostrar_registros_arquivo(caminho_arquivo):
 
 
 def busca_binaria(file, l, r, chave: int):
-    tamanho_registro = struct.calcsize('i20sii')
+    tamanho_registro = struct.calcsize('i30sii')
 
     if r >= l:
         mid = ((l + (r - l) // 2) // tamanho_registro) * tamanho_registro
@@ -75,7 +75,7 @@ def busca_binaria(file, l, r, chave: int):
         if len(file_read) < tamanho_registro:
             return -1
         print('Bytes lidos:', len(file_read))
-        registro = struct.unpack('i20sii', file_read)
+        registro = struct.unpack('i30sii', file_read)
 
         if registro[0] == chave:
             return mid
@@ -100,7 +100,7 @@ def busca_binaria_indice(file, l, r, chave: int):
         if len(file_read) < tamanho_registro:
             return -1
         print('Bytes lidos:', len(file_read))
-        registro = struct.unpack('iic', file_read)
+        registro = struct.unpack('ii', file_read)
 
         if registro[0] == chave:
             return registro[1]
@@ -114,26 +114,26 @@ def busca_binaria_indice(file, l, r, chave: int):
 
 
 def criar_indices(caminho_dados):
-    tamanho_registro = struct.calcsize('i20sii')
+    tamanho_registro = struct.calcsize('i30sii')
     endereco = 0
     with open(caminho_dados, 'rb') as dados, open('./index', 'wb') as index:
         while True:
             registro = dados.read(tamanho_registro)
             if len(registro) > 0:
-                registro = struct.unpack('i20siic', registro)
-                index.write(struct.pack('iic', registro[0], endereco, b'\n'))
+                registro = struct.unpack('i30sii', registro)
+                index.write(struct.pack('ii', registro[0], endereco, b'\n'))
                 endereco += tamanho_registro
             else:
                 break
 
 
 def ler_indices(caminho_indice):
-    tamanho_linha_indice = struct.calcsize('iic')
+    tamanho_linha_indice = struct.calcsize('ii')
     with open(caminho_indice, 'rb') as index:
         while True:
             registro = index.read(tamanho_linha_indice)
             if len(registro) > 0:
-                registro = struct.unpack('iic', registro)
+                registro = struct.unpack('ii', registro)
                 for item in registro:
                     print(item)
             else:
@@ -157,6 +157,40 @@ def mostrar_menu_principal():
     print('6. MOSTRAR ARQUIVO INDICE')
     print('7. PESQUISA BINARIA COM INDICE')
     print('10. SAIR')
+
+
+def popular_base_dados():
+
+    chave = 1
+    lista_nomes = []
+    lista_sobrenomes = []
+
+    with open('lista_nomes.txt', 'rb') as nomes:
+        for linha in nomes:
+            lista_nomes.append(linha.decode('utf-8').rstrip() + ' ')
+
+    with open('lista_sobrenomes.txt', 'rb') as sobrenomes:
+        for linha in sobrenomes:
+            lista_sobrenomes.append(linha.decode('utf-8').rstrip())
+
+
+    lista_nome_sobrenome = []
+    for nome in lista_nomes:
+        for sobrenome in lista_sobrenomes:
+            lista_nome_sobrenome.append("{:<30}".format(nome + sobrenome))
+
+
+    with open('dados', 'wb') as dados:
+        for nome in lista_nome_sobrenome:
+            idade = random.randrange(18, 65)
+            salario = random.randrange(1000, 7000)
+            registro = struct.pack('i30sii', chave, nome.encode('utf-8'), idade, salario)
+            chave += 1
+            dados.write(registro)
+
+
+
+
 
 
 def main():
@@ -197,7 +231,7 @@ def main():
                     print('A chave', chave, 'esta no endereco', endereco)
                     with open('./dados', 'rb') as file_dados:
                         file_dados.seek(endereco)
-                        tamanho_registro = struct.calcsize('i20siic')
+                        tamanho_registro = struct.calcsize('i30sii')
                         registro = file_dados.read(tamanho_registro)
                         mostrar_registro(registro)
                 else:
