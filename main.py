@@ -93,13 +93,13 @@ def busca_binaria_indice(file, l, r, chave: int):
     if r >= l:
 
         mid = ((l + (r - l) // 2) // tamanho_registro) * tamanho_registro
-        #print('Mid', mid)
+        # print('Mid', mid)
         file.seek(mid)
-        #print('Posição: ', file.tell())
+        # print('Posição: ', file.tell())
         file_read = file.read(tamanho_registro)
         if len(file_read) < tamanho_registro:
             return -1
-        #print('Bytes lidos:', len(file_read))
+        # print('Bytes lidos:', len(file_read))
         registro = struct.unpack('ii', file_read)
 
         if registro[0] == chave:
@@ -113,6 +113,7 @@ def busca_binaria_indice(file, l, r, chave: int):
         return -1
 
 
+# Criar índices NORMAIS para a chave.
 def criar_indices(caminho_dados):
     tamanho_registro = struct.calcsize('i30sii')
     endereco = 0
@@ -127,6 +128,57 @@ def criar_indices(caminho_dados):
                 break
 
 
+# Inicializar índice hash vazio
+def inicializar_indice_hash():
+    with open('index_hash', 'wb') as index:
+        for i in range(0, 10000):
+            index.write(b'00000000')
+
+
+# Criar índices HASH para a chave primária.
+def criar_indices_hash(caminho_dados):
+    tamanho_registro = struct.calcsize('i30sii')
+    endereco = 0
+    tamanho_registro_index = struct.calcsize('ii')
+    qtde_blocos = 200
+
+    with open(caminho_dados, 'rb') as dados, open('index_hash', 'a+b') as index:
+
+        while True:
+            # Lê um bloco do tamanho de um registro no arquivo de dados
+            registro = dados.read(tamanho_registro)
+            # Se o tamanho do bloco lido for maior que 0, significa que conseguiu ler um registro
+            if len(registro) > 0:
+                # Criar uma tupla a partir dos bytes lidos no arquivo de dados
+                registro = struct.unpack('i30sii', registro)
+                # Calcula o bloco onde a chave primária deve ir
+                hash_index = registro[0] % qtde_blocos
+                # Desloca o cursor do arquivo para o início do bloco selecionado
+                # Por exemplo: chave 353, hash(350) = 350 % 200 = bloco 150
+                # 150 * 50 registros * 8 bytes por registro = 60000.
+                # A posição inicial do índice para a chave estará no byte 60000
+                index.seek(hash_index * 50 * tamanho_registro_index)
+                # Verifica se aquela posição do arquivo está vazia. Se não estiver,
+                # procurar a primeira posição vazia em sindex.tell()equência
+                # Para verificar se está vazia, ler 1 byte.
+                # Se o valor lido for 0, então está vazia
+                posicao_lida = index.read(1)
+                # Enquanto a posicao lida nao estiver vazia
+                # procurar a próxima posicao vazia
+                while posicao_lida != b'0':
+                    posicao_lida = index.read(1)
+                # Retorna 1 byte
+                index.seek(-1, 1)
+                # Escreve chave e posicao do registro no arquivo de dados
+                index.write(struct.pack('ii', registro[0], endereco))
+                # Atualiza o endereço para a posição do próximo do registro
+                endereco += tamanho_registro
+
+            else:
+                break
+
+
+# Mostra o arquivo de índice
 def ler_indices(caminho_indice):
     tamanho_linha_indice = struct.calcsize('ii')
     with open(caminho_indice, 'rb') as index:
@@ -165,7 +217,7 @@ def mostrar_menu_principal():
     print('3. CRIAR INDICE (COMUM)')
     print('4. PESQUISA BINARIA COM INDICE COMUM')
     print('5. MOSTRAR ARQUIVO INDICE')
-    print('7. PESQUISA BINARIA COM INDICE')
+    print('6. CRIAR INDICE HASH')
     print('10. SAIR')
 
 
@@ -230,7 +282,7 @@ def main():
         elif opcao == '5':
             ler_indices('index')
         elif opcao == '6':
-            ler_indices('./index')
+            criar_indices_hash('dados')
         elif opcao == '7':
             chave: int = int(input('Informe a chave que deseja procurar:  '))
             caminho_indice = './index'
