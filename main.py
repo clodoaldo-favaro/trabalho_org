@@ -130,7 +130,7 @@ def criar_indices(caminho_dados):
 
 # Inicializar índice hash vazio
 def inicializar_indice_hash():
-    bytes_obj = struct.pack('ii', 0, 0)
+    bytes_obj = b'00000000'
     with open('index_hash', 'wb') as index:
         for i in range(0, 10000):
             index.write(bytes_obj)
@@ -146,7 +146,7 @@ def criar_indices_hash(caminho_dados):
     endereco = 0
     tamanho_registro_index = struct.calcsize('ii')
     qtde_blocos = 200
-    bytes_vazios = struct.pack('ii', 0, 0)
+    bytes_vazios = b'00000000'
 
     with open(caminho_dados, 'rb') as dados, open('index_hash', 'a+b') as index:
         index.seek(0)
