@@ -113,6 +113,33 @@ def busca_binaria_indice(file, l, r, chave: int):
         return -1
 
 
+def busca_hash_binaria(file, l, r, chave):
+    tamanho_registro = struct.calcsize('ii')
+
+    if r >= l:
+
+        mid = ((l + (r - l) // 2) // tamanho_registro) * tamanho_registro
+        # print('Mid', mid)
+        file.seek(mid)
+        # print('Posição: ', file.tell())
+        file_read = file.read(tamanho_registro)
+        if len(file_read) < tamanho_registro:
+            return -1
+        # print('Bytes lidos:', len(file_read))
+        registro = struct.unpack('ii', file_read)
+
+        if registro[0] == chave:
+            return registro[1]
+        elif registro[0] > chave:
+            return busca_binaria_indice(file, l, mid - tamanho_registro, chave)
+        else:
+            return busca_binaria_indice(file, mid + tamanho_registro, r, chave)
+
+    else:
+        return -1
+
+
+
 # Criar índices NORMAIS para a chave.
 def criar_indices(caminho_dados):
     tamanho_registro = struct.calcsize('i30sii')
@@ -213,7 +240,14 @@ def ler_indices(caminho_indice):
 def busca_binaria_helper(caminho: str, chave: int):
     r = os.stat(caminho).st_size
     arq = open(caminho, 'rb')
-    posicao = busca_binaria(arq, 0, r, chave)
+    posicao = busca_binaria_indice(arq, 0, r, chave)
+    arq.close()
+    return posicao
+
+def busca_hash_binaria_helper(caminho: str, chave: int):
+    r = os.stat(caminho).st_size
+    arq = open(caminho, 'rb')
+    posicao = busca_binaria_hash(arq, 0, r, chave)
     arq.close()
     return posicao
 
