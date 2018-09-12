@@ -130,10 +130,11 @@ def criar_indices(caminho_dados):
 
 # Inicializar índice hash vazio
 def inicializar_indice_hash():
-    bytes_obj = b'00000000'
+
+    vazio = struct.pack('i', 0)
     with open('index_hash', 'wb') as index:
-        for i in range(0, 10000):
-            index.write(bytes_obj)
+        for i in range(0, 20000):
+            index.write(vazio)
 
 
 # Criar índices HASH para a chave primária.
@@ -142,13 +143,15 @@ def criar_indices_hash(caminho_dados):
     # Criar o índice zerado
     inicializar_indice_hash()
 
+
     tamanho_registro = struct.calcsize('i30sii')
     endereco = 0
     tamanho_registro_index = struct.calcsize('ii')
     qtde_blocos = 200
-    bytes_vazios = b'00000000'
+    vazio = 0
 
-    with open(caminho_dados, 'rb') as dados, open('index_hash', 'a+b') as index:
+
+    with open(caminho_dados, 'rb') as dados, open('index_hash', 'r+b') as index:
         index.seek(0)
         while True:
             # Lê um bloco do tamanho de um registro no arquivo de dados
@@ -159,30 +162,28 @@ def criar_indices_hash(caminho_dados):
                 registro = struct.unpack('i30sii', registro)
                 # Calcula o bloco onde a chave primária deve ir
                 hash_index = registro[0] % qtde_blocos
-
-                # Desloca o cursor do arquivo para o início do bloco selecionado
-                # Por exemplo: chave 353, hash(350) = 350 % 200 = bloco 150
-                # 150 * 50 registros * 8 bytes por registro = 60000.
-                # A posição inicial do índice para a chave estará no byte 60000
-                index.seek(hash_index * 50 * tamanho_registro_index)
-                posicao_atual = index.tell()
                 if hash_index == 21:
-                    print('breakpoint hashindex == 21')
+                    print('wait 21')
+                deslocamento = hash_index * 50 * tamanho_registro_index
+                # Desloca o cursor do arquivo para o início do bloco selecionado
+                index.seek(deslocamento)
+                posicao_atual = index.tell()
+
                 index.seek(400)
-                teste = index.read(8)
-                if teste == bytes_vazios:
-                    print('breakpoint index.read() vazio na posicao 400')
-                index.seek(posicao_atual)
+                teste = struct.unpack('ii', index.read(tamanho_registro_index))[0]
+                if teste == vazio:
+                    print('vazio')
+                index.seek(deslocamento)
 
                 # Verifica se aquela posição do arquivo está vazia. Se não estiver,
                 # procurar a primeira posição vazia em sindex.tell()equência
                 # Para verificar se está vazia, ler 8 bytes.
                 # Se o valor lido for 0, então está vazia
-                posicao_lida = index.read(tamanho_registro_index)
+                posicao_lida = struct.unpack('ii', index.read(tamanho_registro_index))
                 # Enquanto a posicao lida nao estiver vazia
                 # procurar a próxima posicao vazia
-                while posicao_lida != bytes_vazios:
-                        posicao_lida = index.read(tamanho_registro_index)
+                while posicao_lida[0] != vazio:
+                    posicao_lida = struct.unpack('ii', index.read(tamanho_registro_index))
 
                 index.seek(-tamanho_registro_index, 1)
                 # Escreve chave e posicao do registro no arquivo de dados
