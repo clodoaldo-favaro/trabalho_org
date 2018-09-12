@@ -143,13 +143,11 @@ def criar_indices_hash(caminho_dados):
     # Criar o índice zerado
     inicializar_indice_hash()
 
-
     tamanho_registro = struct.calcsize('i30sii')
     endereco = 0
     tamanho_registro_index = struct.calcsize('ii')
     qtde_blocos = 200
     vazio = 0
-
 
     with open(caminho_dados, 'rb') as dados, open('index_hash', 'r+b') as index:
         index.seek(0)
@@ -162,37 +160,40 @@ def criar_indices_hash(caminho_dados):
                 registro = struct.unpack('i30sii', registro)
                 # Calcula o bloco onde a chave primária deve ir
                 hash_index = registro[0] % qtde_blocos
-                if hash_index == 21:
-                    print('wait 21')
-                deslocamento = hash_index * 50 * tamanho_registro_index
+
+                # Calcula o deslocamento para o bloco
+                deslocamento = hash_index * 400
                 # Desloca o cursor do arquivo para o início do bloco selecionado
                 index.seek(deslocamento)
-                posicao_atual = index.tell()
 
-                index.seek(400)
-                teste = struct.unpack('ii', index.read(tamanho_registro_index))[0]
-                if teste == vazio:
-                    print('vazio')
-                index.seek(deslocamento)
-
-                # Verifica se aquela posição do arquivo está vazia. Se não estiver,
-                # procurar a primeira posição vazia em sindex.tell()equência
-                # Para verificar se está vazia, ler 8 bytes.
-                # Se o valor lido for 0, então está vazia
                 posicao_lida = struct.unpack('ii', index.read(tamanho_registro_index))
                 # Enquanto a posicao lida nao estiver vazia
                 # procurar a próxima posicao vazia
                 while posicao_lida[0] != vazio:
                     posicao_lida = struct.unpack('ii', index.read(tamanho_registro_index))
 
+                # Volta uma posição
                 index.seek(-tamanho_registro_index, 1)
-                # Escreve chave e posicao do registro no arquivo de dados
+                # Escreve chave e endereco do registro no arquivo de dados
                 index.write(struct.pack('ii', registro[0], endereco))
                 # Atualiza o endereço para a posição do próximo do registro
                 endereco += tamanho_registro
-
             else:
                 break
+
+
+# Busca hash sequencial. Procura a chave no bloco. Se não achar na primeira, pesquisa sequencialmente
+def busca_hash_linear(chave):
+
+    posicao_inicial = (chave % 200) * 400
+    with open('index_hash', 'rb') as index:
+        index.seek(posicao_inicial)
+        for i in range(0, 50):
+            registro = struct.unpack('ii', index.read(8))
+            if registro[0] == chave:
+                return registro[1]
+        return -1
+
 
 
 # Mostra o arquivo de índice
@@ -235,6 +236,8 @@ def mostrar_menu_principal():
     print('4. PESQUISA BINARIA COM INDICE COMUM')
     print('5. MOSTRAR ARQUIVO INDICE')
     print('6. CRIAR INDICE HASH')
+    print('7. MOSTRAR INDICE HASH')
+    print('8. BUSCA HASH LINEAR')
     print('10. SAIR')
 
 
@@ -301,21 +304,17 @@ def main():
         elif opcao == '6':
             criar_indices_hash('dados')
         elif opcao == '7':
-            chave: int = int(input('Informe a chave que deseja procurar:  '))
-            caminho_indice = './index'
-            r = os.stat(caminho_indice).st_size
-            print('Tamanho do arquivo indice', r)
-            with open('./index', 'rb') as index_file:
-                endereco: int = busca_binaria_indice(index_file, 0, r, chave)
-                if endereco != -1:
-                    print('A chave', chave, 'esta no endereco', endereco)
-                    with open('./dados', 'rb') as file_dados:
-                        file_dados.seek(endereco)
-                        tamanho_registro = struct.calcsize('i30sii')
-                        registro = file_dados.read(tamanho_registro)
-                        mostrar_registro(registro)
-                else:
-                    print('Chave', chave, 'nao localizada')
+            ler_indices('index_hash')
+        elif opcao == '8':
+            chave: int = int(input('Qual chave deseja buscar: '))
+            posicao = busca_hash_linear(chave)
+            if posicao != -1:
+                print('Registro localizado na posicao', posicao)
+                registro = buscar_registro_posicao('dados', posicao)
+                mostrar_registro(registro)
+            else:
+                print('Registro nao localizado')
+
 
 
 if __name__ == "__main__":
