@@ -113,6 +113,7 @@ def busca_binaria_indice(file, l, r, chave: int):
         return -1
 
 
+# Busca binaria no bloco escolhido
 def busca_hash_binaria(file, l, r, chave):
     tamanho_registro = struct.calcsize('ii')
 
@@ -131,12 +132,20 @@ def busca_hash_binaria(file, l, r, chave):
         if registro[0] == chave:
             return registro[1]
         elif registro[0] > chave:
-            return busca_binaria_indice(file, l, mid - tamanho_registro, chave)
+            return busca_hash_binaria(file, l, mid - tamanho_registro, chave)
         else:
-            return busca_binaria_indice(file, mid + tamanho_registro, r, chave)
+            return busca_hash_binaria(file, mid + tamanho_registro, r, chave)
 
     else:
         return -1
+
+
+def busca_hash_binaria_helper(caminho, chave):
+    index = open(caminho, 'rb')
+    l = (chave % 200) * 400
+    r = l + 399
+    posicao = busca_hash_binaria(index, l, r, chave)
+    return posicao
 
 
 
@@ -244,12 +253,7 @@ def busca_binaria_helper(caminho: str, chave: int):
     arq.close()
     return posicao
 
-def busca_hash_binaria_helper(caminho: str, chave: int):
-    r = os.stat(caminho).st_size
-    arq = open(caminho, 'rb')
-    posicao = busca_binaria_hash(arq, 0, r, chave)
-    arq.close()
-    return posicao
+
 
 
 def buscar_registro_posicao(caminho: str, posicao: int):
@@ -268,10 +272,11 @@ def mostrar_menu_principal():
     print('2. MOSTRAR REGISTROS NO ARQUIVO')
     print('3. CRIAR INDICE (COMUM)')
     print('4. PESQUISA BINARIA COM INDICE COMUM')
-    print('5. MOSTRAR ARQUIVO INDICE')
+    print('5. MOSTRAR ARQUIVO INDICE COMUM')
     print('6. CRIAR INDICE HASH')
     print('7. MOSTRAR INDICE HASH')
     print('8. BUSCA HASH LINEAR')
+    print('9. BUSCA HASH BINARIA')
     print('10. SAIR')
 
 
@@ -348,6 +353,16 @@ def main():
                 mostrar_registro(registro)
             else:
                 print('Registro nao localizado')
+        elif opcao == '9':
+            chave: int = int(input('Qual chave deseja buscar: '))
+            posicao = busca_hash_binaria_helper('index_hash', chave)
+            if posicao != -1:
+                print('Registro localizado na posicao', posicao)
+                registro = buscar_registro_posicao('dados', posicao)
+                mostrar_registro(registro)
+            else:
+                print('Registro nao localizado')
+
 
 
 
