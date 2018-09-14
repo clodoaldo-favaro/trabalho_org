@@ -282,7 +282,8 @@ def mostrar_menu_principal():
 
 def popular_base_dados():
 
-    chave = 1
+    chaves = range(0, 100000)
+    random.shuffle(chaves)
     lista_nomes = []
     lista_sobrenomes = []
 
@@ -300,13 +301,14 @@ def popular_base_dados():
         for sobrenome in lista_sobrenomes:
             lista_nome_sobrenome.append("{:<30}".format(nome + sobrenome))
 
-
+    random.shuffle(lista_nome_sobrenome)
     with open('dados', 'wb') as dados:
+        i = 0
         for nome in lista_nome_sobrenome:
             idade = random.randrange(18, 65)
             salario = random.randrange(1000, 7000)
-            registro = struct.pack('i30sii', chave, nome.encode('utf-8'), idade, salario)
-            chave += 1
+            registro = struct.pack('i30sii', chaves[i], nome.encode('utf-8'), idade, salario)
+            i += 1
             dados.write(registro)
 
 
