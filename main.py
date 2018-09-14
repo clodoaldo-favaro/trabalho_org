@@ -282,8 +282,8 @@ def mostrar_menu_principal():
 
 def popular_base_dados():
 
-    chaves = range(0, 100000)
-    random.shuffle(chaves)
+    chaves = random.sample(range(0, 1000000), 10000)
+
     lista_nomes = []
     lista_sobrenomes = []
 
@@ -300,8 +300,8 @@ def popular_base_dados():
     for nome in lista_nomes:
         for sobrenome in lista_sobrenomes:
             lista_nome_sobrenome.append("{:<30}".format(nome + sobrenome))
-
     random.shuffle(lista_nome_sobrenome)
+
     with open('dados', 'wb') as dados:
         i = 0
         for nome in lista_nome_sobrenome:
