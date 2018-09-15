@@ -2,6 +2,13 @@ import os
 import struct
 import random
 
+global_comparacoes = 0
+
+
+def mostrar_comparacoes():
+    print('Total de comparacoes:', global_comparacoes)
+
+
 # Ler o nome. Controla para que no máximo seja de 20 caracteres
 def ler_nome() -> str:
     while True:
@@ -64,59 +71,17 @@ def mostrar_registros_arquivo(caminho_arquivo):
             entrada = arq.read(tamanho_registro)
 
 
-def busca_binaria(file, l, r, chave: int):
-    tamanho_registro = struct.calcsize('i30sii')
-
-    if r >= l:
-        mid = ((l + (r - l) // 2) // tamanho_registro) * tamanho_registro
-        file.seek(mid)
-        print('Posição: ', file.tell())
-        file_read = file.read(tamanho_registro)
-        if len(file_read) < tamanho_registro:
-            return -1
-        print('Bytes lidos:', len(file_read))
-        registro = struct.unpack('i30sii', file_read)
-
-        if registro[0] == chave:
-            return mid
-        elif registro[0] > chave:
-            return busca_binaria(file, l, mid - tamanho_registro, chave)
-        else:
-            return busca_binaria(file, mid + tamanho_registro, r, chave)
-    else:
-        return -1
 
 
-def busca_binaria_indice(file, l, r, chave: int):
-    tamanho_registro = struct.calcsize('ii')
 
-    if r >= l:
-
-        mid = ((l + (r - l) // 2) // tamanho_registro) * tamanho_registro
-        # print('Mid', mid)
-        file.seek(mid)
-        # print('Posição: ', file.tell())
-        file_read = file.read(tamanho_registro)
-        if len(file_read) < tamanho_registro:
-            return -1
-        # print('Bytes lidos:', len(file_read))
-        registro = struct.unpack('ii', file_read)
-
-        if registro[0] == chave:
-            return registro[1]
-        elif registro[0] > chave:
-            return busca_binaria_indice(file, l, mid - tamanho_registro, chave)
-        else:
-            return busca_binaria_indice(file, mid + tamanho_registro, r, chave)
-
-    else:
-        return -1
 
 
 # Busca binaria no bloco escolhido
 def busca_hash_binaria(file, l, r, chave):
+    global global_comparacoes
+    global_comparacoes = 0
+    global_comparacoes += 1
     tamanho_registro = struct.calcsize('ii')
-
     if r >= l:
 
         mid = ((l + (r - l) // 2) // tamanho_registro) * tamanho_registro
@@ -220,14 +185,17 @@ def criar_indices_hash(caminho_dados):
 
 # Busca hash sequencial. Procura a chave no bloco. Se não achar na primeira, pesquisa sequencialmente
 def busca_hash_linear(chave):
-
+    global global_comparacoes
+    global_comparacoes = 0
     posicao_inicial = (chave % 200) * 400
     with open('index_hash', 'rb') as index:
         index.seek(posicao_inicial)
         for i in range(0, 50):
             registro = struct.unpack('ii', index.read(8))
+            global_comparacoes += 1
             if registro[0] == chave:
                 return registro[1]
+
         return -1
 
 
@@ -246,10 +214,64 @@ def ler_indices(caminho_indice):
                 break
 
 
+
+def busca_binaria_indice(file, l, r, chave: int):
+    tamanho_registro = struct.calcsize('ii')
+    global global_comparacoes
+    global_comparacoes = 0
+    global_comparacoes += 1
+    if r >= l:
+
+        mid = ((l + (r - l) // 2) // tamanho_registro) * tamanho_registro
+        # print('Mid', mid)
+        file.seek(mid)
+        # print('Posição: ', file.tell())
+        file_read = file.read(tamanho_registro)
+        if len(file_read) < tamanho_registro:
+            return -1
+        # print('Bytes lidos:', len(file_read))
+        registro = struct.unpack('ii', file_read)
+
+        if registro[0] == chave:
+            return registro[1]
+        elif registro[0] > chave:
+            return busca_binaria_indice(file, l, mid - tamanho_registro, chave)
+        else:
+            return busca_binaria_indice(file, mid + tamanho_registro, r, chave)
+
+    else:
+        return -1
+
+
+def busca_binaria(file, l, r, chave: int):
+    tamanho_registro = struct.calcsize('i30sii')
+    global global_comparacoes
+    global_comparacoes = 0
+    global_comparacoes += 1
+    if r >= l:
+        mid = ((l + (r - l) // 2) // tamanho_registro) * tamanho_registro
+        file.seek(mid)
+        print('Posição: ', file.tell())
+        file_read = file.read(tamanho_registro)
+        if len(file_read) < tamanho_registro:
+            return -1
+        print('Bytes lidos:', len(file_read))
+        registro = struct.unpack('i30sii', file_read)
+
+        if registro[0] == chave:
+            return mid
+        elif registro[0] > chave:
+            return busca_binaria(file, l, mid - tamanho_registro, chave)
+        else:
+            return busca_binaria(file, mid + tamanho_registro, r, chave)
+    else:
+        return -1
+
+
 def busca_binaria_helper(caminho: str, chave: int):
     r = os.stat(caminho).st_size
     arq = open(caminho, 'rb')
-    posicao = busca_binaria_indice(arq, 0, r, chave)
+    posicao = busca_binaria(arq, 0, r, chave)
     arq.close()
     return posicao
 
@@ -271,7 +293,7 @@ def mostrar_menu_principal():
     print('1. CRIAR BASE DE DADOS')
     print('2. MOSTRAR REGISTROS NO ARQUIVO')
     print('3. CRIAR INDICE (COMUM)')
-    print('4. PESQUISA BINARIA COM INDICE COMUM')
+    print('4. PESQUISA BINARIA SEM INDICE')
     print('5. MOSTRAR ARQUIVO INDICE COMUM')
     print('6. CRIAR INDICE HASH')
     print('7. MOSTRAR INDICE HASH')
@@ -339,6 +361,7 @@ def main():
                 mostrar_registro(registro)
             else:
                 print('Registro não localizado')
+            mostrar_comparacoes()
         elif opcao == '5':
             ler_indices('index')
         elif opcao == '6':
@@ -354,6 +377,7 @@ def main():
                 mostrar_registro(registro)
             else:
                 print('Registro nao localizado')
+            mostrar_comparacoes()
         elif opcao == '9':
             chave: int = int(input('Qual chave deseja buscar: '))
             posicao = busca_hash_binaria_helper('index_hash', chave)
@@ -363,6 +387,7 @@ def main():
                 mostrar_registro(registro)
             else:
                 print('Registro nao localizado')
+            mostrar_comparacoes()
 
 
 
