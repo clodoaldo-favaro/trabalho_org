@@ -283,6 +283,7 @@ def mostrar_menu_principal():
 def popular_base_dados():
 
     chave = 1
+
     lista_nomes = []
     lista_sobrenomes = []
 
@@ -300,7 +301,7 @@ def popular_base_dados():
         for sobrenome in lista_sobrenomes:
             lista_nome_sobrenome.append("{:<30}".format(nome + sobrenome))
 
-
+    random.shuffle(lista_nome_sobrenome)
     with open('dados', 'wb') as dados:
         for nome in lista_nome_sobrenome:
             idade = random.randrange(18, 65)
