@@ -306,7 +306,9 @@ def mostrar_menu_principal():
     print('7. MOSTRAR INDICE HASH')
     print('8. BUSCA HASH LINEAR')
     print('9. BUSCA HASH BINARIA')
-    print('10. SAIR')
+    print('10. CRIAR INDICE ARVORES (NOME')
+    print('11. BUSCAR NOME (INDICE ARVORE)')
+    print('15. SAIR')
 
 
 def popular_base_dados():
@@ -351,7 +353,7 @@ def main():
     while True:
         mostrar_menu_principal()
         opcao = input('Informe a opcao desejada: ')
-        if opcao == '10':
+        if opcao == '15':
             break
         elif opcao == '1':
             popular_base_dados()
