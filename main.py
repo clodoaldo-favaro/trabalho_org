@@ -6,6 +6,7 @@ global_comparacoes = 0
 
 
 def mostrar_comparacoes():
+    global global_comparacoes
     print('Total de comparacoes:', global_comparacoes)
 
 
@@ -79,7 +80,6 @@ def mostrar_registros_arquivo(caminho_arquivo):
 # Busca binaria no bloco escolhido
 def busca_hash_binaria(file, l, r, chave):
     global global_comparacoes
-    global_comparacoes = 0
     global_comparacoes += 1
     tamanho_registro = struct.calcsize('ii')
     if r >= l:
@@ -107,6 +107,8 @@ def busca_hash_binaria(file, l, r, chave):
 
 def busca_hash_binaria_helper(caminho, chave):
     index = open(caminho, 'rb')
+    global global_comparacoes
+    global_comparacoes = 0
     l = (chave % 200) * 400
     r = l + 399
     posicao = busca_hash_binaria(index, l, r, chave)
@@ -186,7 +188,7 @@ def criar_indices_hash(caminho_dados):
 # Busca hash sequencial. Procura a chave no bloco. Se não achar na primeira, pesquisa sequencialmente
 def busca_hash_linear(chave):
     global global_comparacoes
-    global_comparacoes = 0
+
     posicao_inicial = (chave % 200) * 400
     with open('index_hash', 'rb') as index:
         index.seek(posicao_inicial)
@@ -246,7 +248,7 @@ def busca_binaria_indice(file, l, r, chave: int):
 def busca_binaria(file, l, r, chave: int):
     tamanho_registro = struct.calcsize('i30sii')
     global global_comparacoes
-    global_comparacoes = 0
+
     global_comparacoes += 1
     if r >= l:
         mid = ((l + (r - l) // 2) // tamanho_registro) * tamanho_registro
@@ -260,15 +262,20 @@ def busca_binaria(file, l, r, chave: int):
 
         if registro[0] == chave:
             return mid
+
         elif registro[0] > chave:
             return busca_binaria(file, l, mid - tamanho_registro, chave)
+
         else:
             return busca_binaria(file, mid + tamanho_registro, r, chave)
+
     else:
         return -1
 
 
 def busca_binaria_helper(caminho: str, chave: int):
+    global global_comparacoes
+    global_comparacoes = 0
     r = os.stat(caminho).st_size
     arq = open(caminho, 'rb')
     posicao = busca_binaria(arq, 0, r, chave)
@@ -370,6 +377,8 @@ def main():
             ler_indices('index_hash')
         elif opcao == '8':
             chave: int = int(input('Qual chave deseja buscar: '))
+            global global_comparacoes
+            global_comparacoes = 0
             posicao = busca_hash_linear(chave)
             if posicao != -1:
                 print('Registro localizado na posicao', posicao)
