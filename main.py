@@ -57,11 +57,14 @@ def mostrar_registro(registro: bytes):
 # Percorre o arquivo e mostra os registros
 def mostrar_registros_arquivo(caminho_arquivo):
     tamanho_registro = struct.calcsize('i30sii')
+    i = 0
     with open(caminho_arquivo, 'rb') as arq:
         entrada = arq.read(tamanho_registro)
         while entrada != b'':
             mostrar_registro(entrada)
             entrada = arq.read(tamanho_registro)
+            i += 1
+    print('Total de registros:', i)
 
 
 def busca_binaria(file, l, r, chave: int):
@@ -182,13 +185,13 @@ def criar_indices_hash(caminho_dados):
     tamanho_registro = struct.calcsize('i30sii')
     endereco = 0
     tamanho_registro_index = struct.calcsize('ii')
-    qtde_blocos = 200
+    qtde_blocos = 500
     vazio = 0
 
     with open(caminho_dados, 'rb') as dados, open('index_hash', 'r+b') as index:
-        index.seek(0)
+
         while True:
-            # Lê um bloco do tamanho de um registro no arquivo de dados
+            # Lê 1 registro do arquivo de dados
             registro = dados.read(tamanho_registro)
             # Se o tamanho do bloco lido for maior que 0, significa que conseguiu ler um registro
             if len(registro) > 0:
@@ -198,13 +201,17 @@ def criar_indices_hash(caminho_dados):
                 hash_index = registro[0] % qtde_blocos
 
                 # Calcula o deslocamento para o bloco
-                deslocamento = hash_index * 400
+                # Como cada entrada do índice tem 8 bytes, e cada bloco tem 20 entradas,
+                # o deslocamento será 8 * 20 = 160 bytes
+                deslocamento = hash_index * 160
                 # Desloca o cursor do arquivo para o início do bloco selecionado
                 index.seek(deslocamento)
-
+                # Le o arquivo indice
                 posicao_lida = struct.unpack('ii', index.read(tamanho_registro_index))
                 # Enquanto a posicao lida nao estiver vazia
                 # procurar a próxima posicao vazia
+                # se estourar o limite do bloco, gravar na área de extensão (a partir do byte 80000)
+                i = 0
                 while posicao_lida[0] != vazio:
                     posicao_lida = struct.unpack('ii', index.read(tamanho_registro_index))
 
@@ -280,9 +287,13 @@ def mostrar_menu_principal():
     print('10. SAIR')
 
 
+
+
+
 def popular_base_dados():
 
-    chaves = random.sample(range(0, 1000000), 10000)
+    # Gera 10000 chaves aleatórias dentro de um intervalo de 1 a 1000000
+    chaves = random.sample(range(1, 1000000), 10000)
 
     lista_nomes = []
     lista_sobrenomes = []
@@ -300,6 +311,8 @@ def popular_base_dados():
     for nome in lista_nomes:
         for sobrenome in lista_sobrenomes:
             lista_nome_sobrenome.append("{:<30}".format(nome + sobrenome))
+
+    # Desordena a lista de nomes e sobrenomes
     random.shuffle(lista_nome_sobrenome)
 
     with open('dados', 'wb') as dados:
