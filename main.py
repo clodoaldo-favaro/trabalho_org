@@ -1,6 +1,7 @@
 import os
 import struct
 import random
+import pickle
 
 global_comparacoes = 0
 
@@ -342,7 +343,88 @@ def popular_base_dados():
             dados.write(registro)
 
 
+class Nodo:
 
+    def __init__(self, nome:str, endereco:int):
+        self.nome = nome
+        self.endereco = endereco
+        self.l = None
+        self.r = None
+
+    def insert(self, nome:str, endereco:int):
+        if self.nome:
+            if nome < self.nome:
+                if self.l is None:
+                    self.l = Nodo(nome, endereco)
+                else:
+                    self.l.insert(nome, endereco)
+            elif nome > self.nome:
+                if self.r is None:
+                    self.r = Nodo(nome, endereco)
+                else:
+                    self.r.insert(nome, endereco)
+        else:
+            self.nome = nome
+            self.data = data
+
+
+    def mostrar_arvore(self):
+        if self.l:
+            self.l.mostrar_arvore()
+        print('Nome:', self.nome, 'Endereco:',self.endereco)
+        if self.r:
+            self.r.mostrar_arvore()
+
+    def pesquisar_nome(self, nome:str):
+        if self:
+            print(self.nome)
+            if self.nome == nome:
+                return self.endereco
+            elif nome < self.nome:
+                if self.l:
+                    return self.l.pesquisar_nome(nome)
+            else:
+                if self.r:
+                    return self.r.pesquisar_nome(nome)
+        else:
+            return -1
+
+
+
+
+
+def criar_indice_bst(caminho_dados):
+    with open(caminho_dados, 'rb') as dados, open('index_arvore', 'wb') as index:
+        tamanho_registro = struct.calcsize('i30sii')
+        leitura = dados.read(tamanho_registro)
+        registro = struct.unpack('i30sii', leitura)
+        endereco = 0
+        arvore = Nodo(registro[1].decode('utf-8'), endereco)
+
+        while True:
+            leitura = dados.read(tamanho_registro)
+            if leitura == b'':
+                break
+            registro = struct.unpack('i30sii', leitura)
+            endereco += tamanho_registro
+            arvore.insert(registro[1].decode('utf-8'), endereco)
+
+        pickle.dump(arvore, index)
+
+def pesquisar_nome_helper(nome:str):
+    posicao = 0
+    global global_comparacoes
+    global_comparacoes = 0
+    with open('index_arvore', 'rb') as index:
+        arvore = pickle.load(index)
+        posicao = arvore.pesquisar_nome(nome)
+        return posicao
+
+def buscar_posicao(caminho_dados:str, posicao:int):
+    with open(caminho_dados, 'rb') as dados:
+        tamanho_registro = struct.calcsize('i30sii')
+        leitura = dados.read(tamanho_registro)
+        registro = struct.unpack()
 
 
 
@@ -399,44 +481,21 @@ def main():
             else:
                 print('Registro nao localizado')
             mostrar_comparacoes()
+        elif opcao == '10':
+            criar_indice_bst('dados')
+        elif opcao == '11':
+            nome = input('Informe o nome que deseja procurar    ')
+            nome ="{:<30}".format(nome)
+            posicao = pesquisar_nome_helper(nome)
+            if posicao != -1:
+                print('Registro localizado na posicao', posicao)
+            else:
+                print('Registro nao localizado')
 
 
 
-class Nodo:
-
-    def __init__(self, nome:str, endereco:int):
-        self.nome = nome
-        self.endereco = endereco
-        self.l = None
-        self.r = None
-
-    def insert(self, nome:str, endereco:int):
-        if self.nome:
-            if nome < self.nome:
-                if self.l is None:
-                    self.l = Nodo(nome, endereco)
-                else:
-                    self.l.insert(nome, endereco)
-            elif nome > self.nome:
-                if self.r is None:
-                    self.r = Nodo(nome, endereco)
-                else:
-                    self.r.insert(nome, endereco)
-        else:
-            self.nome = nome
-            self.data = data
 
 
-    def mostrar_arvore(self):
-        if self is not None:
-            self.l.mostrar_arvore()
-            print('Nome:', self.nome, 'Endereco:',self.endereco)
-            self.r.mostrar_arvore()
-
-
-
-def criar_indice_bst(caminho_dados):
-    with open(caminho_dados, 'rb') as dados:
 
 
 
