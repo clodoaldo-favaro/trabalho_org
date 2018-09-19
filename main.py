@@ -2,6 +2,7 @@ import os
 import struct
 import random
 import pickle
+import sys
 
 global_comparacoes = 0
 
@@ -73,11 +74,6 @@ def mostrar_registros_arquivo(caminho_arquivo):
             entrada = arq.read(tamanho_registro)
 
 
-
-
-
-
-
 # Busca binaria no bloco escolhido
 def busca_hash_binaria(file, l, r, chave):
     global global_comparacoes
@@ -118,7 +114,7 @@ def busca_hash_binaria_helper(caminho, chave):
 
 
 # Criar índices NORMAIS para a chave.
-def criar_indices(caminho_dados):
+def criar_indice_comum(caminho_dados):
     tamanho_registro = struct.calcsize('i30sii')
     endereco = 0
     with open(caminho_dados, 'rb') as dados, open('index', 'wb') as index:
@@ -221,7 +217,6 @@ def ler_indices(caminho_indice):
 def busca_binaria_indice(file, l, r, chave: int):
     tamanho_registro = struct.calcsize('ii')
     global global_comparacoes
-    global_comparacoes = 0
     global_comparacoes += 1
     if r >= l:
 
@@ -246,6 +241,18 @@ def busca_binaria_indice(file, l, r, chave: int):
         return -1
 
 
+def busca_binaria_indice_helper(caminho:str, chave:int):
+    global global_comparacoes
+    global_comparacoes = 0
+    r = os.stat(caminho).st_size
+    arq = open(caminho, 'rb')
+    posicao = busca_binaria(arq, 0, r, chave)
+    arq.close()
+    return posicao
+
+
+
+
 def busca_binaria(file, l, r, chave: int):
     tamanho_registro = struct.calcsize('i30sii')
     global global_comparacoes
@@ -254,11 +261,11 @@ def busca_binaria(file, l, r, chave: int):
     if r >= l:
         mid = ((l + (r - l) // 2) // tamanho_registro) * tamanho_registro
         file.seek(mid)
-        print('Posição: ', file.tell())
+        #print('Posição: ', file.tell())
         file_read = file.read(tamanho_registro)
         if len(file_read) < tamanho_registro:
             return -1
-        print('Bytes lidos:', len(file_read))
+        #print('Bytes lidos:', len(file_read))
         registro = struct.unpack('i30sii', file_read)
 
         if registro[0] == chave:
@@ -301,15 +308,17 @@ def mostrar_menu_principal():
     print('1. CRIAR BASE DE DADOS')
     print('2. MOSTRAR REGISTROS NO ARQUIVO')
     print('3. CRIAR INDICE (COMUM)')
-    print('4. PESQUISA BINARIA SEM INDICE')
-    print('5. MOSTRAR ARQUIVO INDICE COMUM')
-    print('6. CRIAR INDICE HASH')
-    print('7. MOSTRAR INDICE HASH')
-    print('8. BUSCA HASH LINEAR')
-    print('9. BUSCA HASH BINARIA')
-    print('10. CRIAR INDICE ARVORES (NOME)')
-    print('11. BUSCAR NOME (INDICE ARVORE)')
-    print('15. SAIR')
+    print('4. MOSTRAR INDICE (COMUM)')
+    print('5. PESQUISA BINARIA (SEM INDICE)')
+    print('6. PESQUISA BINARIA (COM INDICE COMUM)')
+    print('7. CRIAR INDICE (HASH)')
+    print('8. MOSTRAR INDICE (HASH)')
+    print('9. PESQUISA HASH (LINEAR)')
+    print('10. PESQUISA HASH (BINARIA)')
+    print('11. CRIAR INDICE (ARVORE - NOME)')
+    print('12. MOSTRAR INDICE (ARVORE - CAMINHAMENTO CENTRAL)')
+    print('13. PESQUISA POR NOME (INDICE ARVORE)')
+    print('14. SAIR')
 
 
 def popular_base_dados():
@@ -376,8 +385,10 @@ class Nodo:
             self.r.mostrar_arvore()
 
     def pesquisar_nome(self, nome:str):
+        global global_comparacoes
         if self:
-            print(self.nome)
+            #print('nodo atual:',self.nome)
+            global_comparacoes += 1
             if self.nome == nome:
                 return self.endereco
             elif nome < self.nome:
@@ -390,6 +401,14 @@ class Nodo:
             return -1
 
 
+    def size_arvore(self):
+        cont = sys.getsizeof(self)
+        if self.l:
+            cont += self.l.size_arvore()
+        if self.r:
+            cont += self.r.size_arvore()
+        return cont
+            
 
 
 
@@ -411,20 +430,24 @@ def criar_indice_bst(caminho_dados):
 
         pickle.dump(arvore, index)
 
+
 def pesquisar_nome_helper(nome:str):
     posicao = 0
     global global_comparacoes
     global_comparacoes = 0
     with open('index_arvore', 'rb') as index:
         arvore = pickle.load(index)
+        print('Tamanho da arvore em memoria: ', arvore.size_arvore(), 'bytes')
         posicao = arvore.pesquisar_nome(nome)
         return posicao
+
 
 def buscar_posicao(caminho_dados:str, posicao:int):
     with open(caminho_dados, 'rb') as dados:
         tamanho_registro = struct.calcsize('i30sii')
+        dados.seek(posicao)
         leitura = dados.read(tamanho_registro)
-        registro = struct.unpack()
+        return leitura
 
 
 
@@ -435,15 +458,15 @@ def main():
     while True:
         mostrar_menu_principal()
         opcao = input('Informe a opcao desejada: ')
-        if opcao == '15':
+        if opcao == '14':
             break
         elif opcao == '1':
             popular_base_dados()
         elif opcao == '2':
             mostrar_registros_arquivo('dados')
         elif opcao == '3':
-            criar_indices('dados')
-        elif opcao == '4':
+            criar_indice_comum('dados')
+        elif opcao == '5':
             chave: int = int(input('Qual chave deseja buscar: '))
             posicao: int = busca_binaria_helper(caminho, chave)
             if posicao != -1:
@@ -453,13 +476,24 @@ def main():
             else:
                 print('Registro não localizado')
             mostrar_comparacoes()
-        elif opcao == '5':
-            ler_indices('index')
         elif opcao == '6':
-            criar_indices_hash('dados')
+            chave: int = int(input('Qual chave deseja buscar: '))
+            posicao: int = busca_binaria_indice_helper('dados', chave)
+            if posicao != -1:
+                print('Registro encontrado na posicao: ', posicao)
+                registro = buscar_registro_posicao('dados', posicao)
+                mostrar_registro(registro)
+            else:
+                print('Registro não localizado')
+            mostrar_comparacoes()
+
+        elif opcao == '4':
+            ler_indices('index')
         elif opcao == '7':
-            ler_indices('index_hash')
+            criar_indices_hash('dados')
         elif opcao == '8':
+            ler_indices('index_hash')
+        elif opcao == '9':
             chave: int = int(input('Qual chave deseja buscar: '))
             global global_comparacoes
             global_comparacoes = 0
@@ -471,7 +505,7 @@ def main():
             else:
                 print('Registro nao localizado')
             mostrar_comparacoes()
-        elif opcao == '9':
+        elif opcao == '10':
             chave: int = int(input('Qual chave deseja buscar: '))
             posicao = busca_hash_binaria_helper('index_hash', chave)
             if posicao != -1:
@@ -481,27 +515,19 @@ def main():
             else:
                 print('Registro nao localizado')
             mostrar_comparacoes()
-        elif opcao == '10':
-            criar_indice_bst('dados')
         elif opcao == '11':
+            criar_indice_bst('dados')
+        elif opcao == '13':
             nome = input('Informe o nome que deseja procurar    ')
             nome ="{:<30}".format(nome)
             posicao = pesquisar_nome_helper(nome)
             if posicao != -1:
                 print('Registro localizado na posicao', posicao)
+                registro = buscar_posicao('dados', posicao)
+                mostrar_registro(registro)
             else:
                 print('Registro nao localizado')
-
-
-
-
-
-
-
-
-
-
-
+            mostrar_comparacoes()
 
 
 
