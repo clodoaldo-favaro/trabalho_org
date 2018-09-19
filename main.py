@@ -306,7 +306,7 @@ def mostrar_menu_principal():
     print('7. MOSTRAR INDICE HASH')
     print('8. BUSCA HASH LINEAR')
     print('9. BUSCA HASH BINARIA')
-    print('10. CRIAR INDICE ARVORES (NOME')
+    print('10. CRIAR INDICE ARVORES (NOME)')
     print('11. BUSCAR NOME (INDICE ARVORE)')
     print('15. SAIR')
 
@@ -399,6 +399,50 @@ def main():
             else:
                 print('Registro nao localizado')
             mostrar_comparacoes()
+
+
+
+class Nodo:
+
+    def __init__(self, nome:str, endereco:int):
+        self.nome = nome
+        self.endereco = endereco
+        self.l = None
+        self.r = None
+
+    def insert(self, nome:str, endereco:int):
+        if self.nome:
+            if nome < self.nome:
+                if self.l is None:
+                    self.l = Nodo(nome, endereco)
+                else:
+                    self.l.insert(nome, endereco)
+            elif nome > self.nome:
+                if self.r is None:
+                    self.r = Nodo(nome, endereco)
+                else:
+                    self.r.insert(nome, endereco)
+        else:
+            self.nome = nome
+            self.data = data
+
+
+    def mostrar_arvore(self):
+        if self is not None:
+            self.l.mostrar_arvore()
+            print('Nome:', self.nome, 'Endereco:',self.endereco)
+            self.r.mostrar_arvore()
+
+
+
+def criar_indice_bst(caminho_dados):
+    with open(caminho_dados, 'rb') as dados:
+
+
+
+
+
+
 
 
 
