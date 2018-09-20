@@ -3,6 +3,7 @@ import struct
 import random
 import pickle
 import sys
+import pdb
 
 global_comparacoes = 0
 
@@ -386,6 +387,7 @@ class Nodo:
 
     def pesquisar_nome(self, nome:str):
         global global_comparacoes
+        #pdb.set_trace()
         if self:
             #print('nodo atual:',self.nome)
             global_comparacoes += 1
@@ -418,7 +420,7 @@ def criar_indice_bst(caminho_dados):
         leitura = dados.read(tamanho_registro)
         registro = struct.unpack('i30sii', leitura)
         endereco = 0
-        arvore = Nodo(registro[1].decode('utf-8'), endereco)
+        arvore = Nodo(registro[1].decode('utf-8').rstrip(), endereco)
 
         while True:
             leitura = dados.read(tamanho_registro)
@@ -426,7 +428,7 @@ def criar_indice_bst(caminho_dados):
                 break
             registro = struct.unpack('i30sii', leitura)
             endereco += tamanho_registro
-            arvore.insert(registro[1].decode('utf-8'), endereco)
+            arvore.insert(registro[1].decode('utf-8').rstrip(), endereco)
 
         pickle.dump(arvore, index)
 
@@ -519,7 +521,7 @@ def main():
             criar_indice_bst('dados')
         elif opcao == '13':
             nome = input('Informe o nome que deseja procurar    ')
-            nome ="{:<30}".format(nome)
+            nome ="{:<30}".format(nome).rstrip()
             posicao = pesquisar_nome_helper(nome)
             if posicao != -1:
                 print('Registro localizado na posicao', posicao)
