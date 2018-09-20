@@ -413,6 +413,12 @@ class Nodo:
             
 
 
+def mostrar_arvore_helper():
+    with open('index_arvore', 'rb') as index:
+        arvore = pickle.load(index)
+        arvore.mostrar_arvore()
+        print('Tamanho da árvore em memória:', arvore.size_arvore() / 1000, 'KB')
+
 
 def criar_indice_bst(caminho_dados):
     with open(caminho_dados, 'rb') as dados, open('index_arvore', 'wb') as index:
@@ -519,6 +525,8 @@ def main():
             mostrar_comparacoes()
         elif opcao == '11':
             criar_indice_bst('dados')
+        elif opcao == '12':
+            mostrar_arvore_helper()
         elif opcao == '13':
             nome = input('Informe o nome que deseja procurar    ')
             nome ="{:<30}".format(nome).rstrip()
